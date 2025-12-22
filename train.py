@@ -2,6 +2,7 @@ from torch.utils.data import DataLoader
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 
+from pytorch_cnn import CNN as torchCNN
 from config.read_config import read_config_file
 
 
@@ -28,6 +29,11 @@ if __name__ == '__main__':
   train_set, test_set = load_dataset(config['batch_size'], config['data_dir'])
 
   # Initialize model.
+  if config['model'] == 'pytorch':
+    model = torchCNN(len(config['classes']))
+    print('PyTorch model initialized.')
+  else:
+    raise NotImplementedError()
 
   # Train.
   train_model()
