@@ -1,3 +1,4 @@
+import torch
 from torch.utils.data import DataLoader
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
@@ -42,19 +43,46 @@ def train_model(epochs, train_loader, model, learning_rate):
       optimizer.step()
 
 
+def eval(data, device, model):
+  num_correct = 0
+  num_samples = 0
+  model.eval()
+
+  # Evaluate without computing gradients.
+  with torch.no_grad():
+    print('Starting model evaluation.')
+    for x, y in data:
+      x = x.to(device=device)
+      y = y.to(device=device)
+
+      scores = model(x)
+      _, predictions = scores.max(1)
+
+      num_correct += (predictions == y).sum()
+      num_samples += predictions.size(0)
+
+    print(f'{float(num_correct)/float(num_samples)*100: .2f}% Accuracy')
+
+
 if __name__ == '__main__':
   # Get configurable data.
   config = read_config_file()
 
+  # Set device.
+  device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
   # Load training and testing sets from dataset.
   train_loader, test_loader = load_dataset(config['batch_size'], config['data_dir'])
 
-  # Initialize model.
+  # Initialize the model.
   if config['model'] == 'pytorch':
     model = torchCNN(len(config['classes']))
     print('PyTorch model initialized.')
   else:
     raise NotImplementedError()
 
-  # Train model.
+  # Train the model.
   train_model(config['epochs'], train_loader, model, config['learning_rate'])
+
+  # Evaluate the model.
+  eval(test_loader, device, model)
