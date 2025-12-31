@@ -1,6 +1,8 @@
 from torch.utils.data import DataLoader
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
+import torch.nn as nn
+import torch.optim as optim
 
 from pytorch_cnn import CNN as torchCNN
 from config.read_config import read_config_file
@@ -17,8 +19,27 @@ def load_dataset(batch_size, data_dir):
   return train_loader, test_loader
 
 
-def train_model():
-  pass
+def train_model(epochs, train_loader, model, learning_rate):
+  # Loss and optimizer.
+  criterion = nn.CrossEntropyLoss()
+  optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+  for epoch in range(epochs):
+    print(f'Starting epoch {epoch}')
+    for i, data in enumerate(train_loader, 0):
+      # Get inputs and labels from data.
+      inputs, labels = data
+
+      # Forward propagation and compute loss.
+      outputs = model(inputs)
+      loss = criterion(outputs, labels)
+
+      # Reset gradients and perform backpropagation.
+      optimizer.zero_grad()
+      loss.backward()
+
+      # Update weights.
+      optimizer.step()
 
 
 if __name__ == '__main__':
@@ -26,7 +47,7 @@ if __name__ == '__main__':
   config = read_config_file()
 
   # Load training and testing sets from dataset.
-  train_set, test_set = load_dataset(config['batch_size'], config['data_dir'])
+  train_loader, test_loader = load_dataset(config['batch_size'], config['data_dir'])
 
   # Initialize model.
   if config['model'] == 'pytorch':
@@ -35,7 +56,5 @@ if __name__ == '__main__':
   else:
     raise NotImplementedError()
 
-  # Train.
-  train_model()
-
-  # Save weights
+  # Train model.
+  train_model(config['epochs'], train_loader, model, config['learning_rate'])
